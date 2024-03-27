@@ -1,3 +1,5 @@
+⚠️ Vizmap is in an early state of release. Many more features will be added as the script matures.
+
 # VizMap
 
 VizMap is a Python script designed for parsing and filtering Nmap scan results in XML format. It enhances the usability and readability of Nmap's output by allowing users to easily filter hosts based on operating system type, open ports, and specific protocols. Additionally, VizMap introduces an auto-detection feature for SQL servers, improving the process of identifying database services across scanned networks.
@@ -17,7 +19,7 @@ VizMap is a Python script designed for parsing and filtering Nmap scan results i
 3. Install the required Python packages:
 
 ```
-pip install prettytable colorama
+pip3 install -r requirements.txt
 ```
 
 ## Usage
@@ -31,11 +33,41 @@ python vizmap.py <nmap-output.xml>
 ## Optional Arguments
 
 ```
---windows: Filter for Windows hosts.
---linux: Filter for Linux hosts.
---SQL-Servers: Detect SQL Servers.
---ftp, --ssh, --http, etc.: Filter for hosts with specified open ports.
---filtered: Include filtered ports in the output.
+➜  vizmap git:(main) ✗ python3 vizmap.py -h
+usage: vizmap.py [-h] [--windows] [--linux] [--SQL-Servers] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm] [--filtered] file
+
+Parse Nmap XML output easily.
+
+positional arguments:
+  file           Nmap XML output file
+
+options:
+  -h, --help     show this help message and exit
+
+OS Filters:
+  --windows      Filter for Windows hosts
+  --linux        Filter for Linux hosts
+
+Protocol Auto-Detector:
+  --SQL-Servers  Detect all SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)
+
+Protocol Filters:
+  --ftp          Filter for hosts with an open FTP port
+  --ssh          Filter for hosts with an open SSH port
+  --http         Filter for hosts with an open HTTP port
+  --https        Filter for hosts with an open HTTPS port
+  --dns          Filter for hosts with an open DNS port
+  --kerberos     Filter for hosts with an open Kerberos port
+  --smb          Filter for hosts with an open SMB port
+  --ldap         Filter for hosts with an open LDAP port
+  --mssql        Filter for hosts with an open MSSQL port
+  --mysql        Filter for hosts with an open MySQL port
+  --rdp          Filter for hosts with an open RDP port
+  --vnc          Filter for hosts with an open VNC port
+  --winrm        Filter for hosts with an open WinRM port
+
+Other:
+  --filtered     Include filtered ports
 ```
 
 ## Example
