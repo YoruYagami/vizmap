@@ -1,0 +1,4 @@
+xml.etree.ElementTree
+argparse
+prettytable
+colorama
