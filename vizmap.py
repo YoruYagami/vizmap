@@ -89,19 +89,25 @@ def parse_nmap_xml(file_path):
 def filter_hosts(hosts_data, args):
     sql_port_service_mapping = {
         '1433': 'MSSQL',
+        '1434': 'MSSQL Browser',
+        '1521': 'Oracle',
+        '2483': 'Oracle SSL',
+        '2484': 'Oracle SSL Alternative',
         '3306': 'MySQL',
         '5432': 'PostgreSQL',
-        '1521': 'Oracle',
-        '27017': 'MongoDB',
-        '9001': 'HSQLDB',
-        '6379': 'Redis',
         '5984': 'CouchDB',
+        '6379': 'Redis',
         '7474': 'Neo4j',
-        '9200': 'Elasticsearch',
-        '26257': 'CockroachDB',
+        '8086': 'InfluxDB',
         '8087': 'Riak',
-        '9042': 'Cassandra'
+        '9001': 'HSQLDB',
+        '9042': 'Cassandra',
+        '9200': 'Elasticsearch',
+        '27017': 'MongoDB',
+        '27018': 'MongoDB Replica Set',
+        '26257': 'CockroachDB'
     }
+
 
     protocol_port_mapping = {
         'ftp': '21',
