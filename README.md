@@ -27,7 +27,17 @@ pip3 install -r requirements.txt
 Run VizMap by passing an Nmap XML output file as an argument:
 
 ```
-python vizmap.py <nmap-output.xml>
+# List all Windows Host with smb enabled
+python3 vizmap.py nmap-results.xml --windows --smb
+
+# List all Host with winrm enabled in matrix mode
+python3 vizmap.py nmap-results.xml --windows --winrm --matrix
+
+# List all hosts with SQL service enabled
+python3 vizmap.py nmap-results.xml --windows --sql-server
+
+# Filter for specific port
+python3 vizmap.py nmap-results.xml --port 2375
 ```
 
 ## Optional Arguments
@@ -70,19 +80,6 @@ Visualization:
 
 Other:
   --filtered     Include filtered ports
-```
-
-## Example Usage
-
-```
-# List all hosts with SQL service enabled
-python3 vizmap.py nmap-results.xml --windows --sql-server
-
-# List all Windows Host with smb enabled
-python3 vizmap.py nmap-results.xml --windows --smb
-
-# List all Host with winrm enabled in matrix mode
-python3 vizmap.py nmap-results.xml --windows --winrm --matrix
 ```
 
 This command filters the scan results to show only SQL Servers with by filtering for windows hosts.
