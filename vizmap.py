@@ -25,7 +25,7 @@ def parse_arguments():
     # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
     protocol_group.add_argument('--sql-server', action='store_true', help='Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
-    
+
     # Protocol Filters
     protocol_group = parser.add_argument_group('Protocol Filters')
     protocol_group.add_argument('--ftp', action='store_true', help='Filter for hosts with an open FTP port')
@@ -48,6 +48,7 @@ def parse_arguments():
 
     # Other
     other_group = parser.add_argument_group('Other')
+    other_group.add_argument('--port', type=int, help='Filter for hosts with a specific open port')
     other_group.add_argument('--filtered', action='store_true', help='Include filtered ports')
     
     return parser.parse_args()
@@ -132,6 +133,9 @@ def filter_hosts(hosts_data, args):
             f'{Fore.GREEN}{pid}{Style.RESET_ALL}' if state == 'open' else f'{Fore.YELLOW}{pid}{Style.RESET_ALL}' 
             for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)
         ]
+
+        if args.port and not any(pid == str(args.port) and state == 'open' for pid, state in host['ports']):
+            continue
 
         # Protocol Auto-Detector part
         if args.sql_server:
