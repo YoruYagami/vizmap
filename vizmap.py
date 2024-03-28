@@ -22,7 +22,7 @@ def parse_arguments():
 
     # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
-    protocol_group.add_argument('--SQL-Servers', action='store_true', help='Detect all SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
+    protocol_group.add_argument('--sql-server', action='store_true', help='Detect all SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
     
     # Protocol Filters
     protocol_group = parser.add_argument_group('Protocol Filters')
@@ -106,7 +106,7 @@ def filter_hosts(hosts_data, args):
         ]
 
         # Protocol Auto-Detector part
-        if args.SQL_Servers:
+        if args.sql_server:
             sql_ports = set(sql_port_service_mapping.keys())
             open_sql_ports = sql_ports.intersection([pid for pid, state in host['ports'] if state == 'open'])
             if open_sql_ports:
@@ -210,7 +210,7 @@ def main():
     args = parse_arguments()
     hosts_data = parse_nmap_xml(args.file)
     filtered_hosts = filter_hosts(hosts_data, args)
-    table = create_table(filtered_hosts, args.SQL_Servers)  # Modificato qui
+    table = create_table(filtered_hosts, args.sql_server)
     print(table)
 
 if __name__ == "__main__":
