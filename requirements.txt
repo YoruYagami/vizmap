@@ -2,3 +2,5 @@ xml.etree.ElementTree
 argparse
 prettytable
 colorama
+networkx
+matplotlib

@@ -33,10 +33,9 @@ python vizmap.py <nmap-output.xml>
 ## Optional Arguments
 
 ```
-➜  vizmap git:(main) ✗ python3 vizmap.py -h
-usage: vizmap.py [-h] [--windows] [--linux] [--SQL-Servers] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm] [--filtered] file
+usage: vizmap.py [-h] [--windows] [--linux] [--sql-server] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm] [--matrix-mode] [--filtered] file
 
-Parse Nmap XML output easily.
+Parse and visualize Nmap XML output in matrix mode.
 
 positional arguments:
   file           Nmap XML output file
@@ -49,7 +48,7 @@ OS Filters:
   --linux        Filter for Linux hosts
 
 Protocol Auto-Detector:
-  --SQL-Servers  Detect all SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)
+  --sql-server   Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)
 
 Protocol Filters:
   --ftp          Filter for hosts with an open FTP port
@@ -66,14 +65,24 @@ Protocol Filters:
   --vnc          Filter for hosts with an open VNC port
   --winrm        Filter for hosts with an open WinRM port
 
+Visualization:
+  --matrix-mode  Enable matrix mode visualization
+
 Other:
   --filtered     Include filtered ports
 ```
 
-## Example
+## Example Usage
 
 ```
-python3 vizmap.py nmap-results.xml --windows --SQL-Servers
+# List all hosts with SQL service enabled
+python3 vizmap.py nmap-results.xml --windows --sql-server
+
+# List all Windows Host with smb enabled
+python3 vizmap.py nmap-results.xml --windows --smb
+
+# List all Host with winrm enabled in matrix mode
+python3 vizmap.py nmap-results.xml --windows --winrm --matrix
 ```
 
 This command filters the scan results to show only SQL Servers with by filtering for windows hosts.

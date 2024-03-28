@@ -42,10 +42,13 @@ def parse_arguments():
     protocol_group.add_argument('--vnc', action='store_true', help='Filter for hosts with an open VNC port')
     protocol_group.add_argument('--winrm', action='store_true', help='Filter for hosts with an open WinRM port')
 
+    # Custom visualization
+    visualization = parser.add_argument_group('Visualization')
+    visualization.add_argument('--matrix-mode', action='store_true', help='Enable matrix mode visualization')
+
     # Other
     other_group = parser.add_argument_group('Other')
     other_group.add_argument('--filtered', action='store_true', help='Include filtered ports')
-    other_group.add_argument('--matrix-mode', action='store_true', help='Enable matrix mode visualization')
     
     return parser.parse_args()
 
@@ -191,7 +194,7 @@ def create_grid(hosts_data, include_sql_service=False):
     for host in hosts:
         host_data = hosts_data[hosts.index(host)]
         host_ports = host_data['ports']
-        row = [host] + [port if port in host_ports else '' for port in ports]
+        row = [host, host_data['os_name']] + [port if port in host_ports else '' for port in ports]
         if include_sql_service:
             row.append(host_data.get('sql_service', ''))
         grid.add_row(row)
