@@ -2,6 +2,8 @@ import xml.etree.ElementTree as ET
 import argparse
 from prettytable import PrettyTable
 from colorama import Fore, Style
+import networkx as nx
+import matplotlib.pyplot as plt
 import sys
 
 def initialize_colorama():
@@ -11,8 +13,8 @@ def initialize_colorama():
         colorama.init()
 
 def parse_arguments():
-    """Parses and returns command-line arguments, organized into groups."""
-    parser = argparse.ArgumentParser(description='Parse Nmap XML output easily.')
+    """Simplified argument parsing."""
+    parser = argparse.ArgumentParser(description='Parse and visualize Nmap XML output in matrix mode.')
     parser.add_argument('file', help='Nmap XML output file')
     
     # OS Filters
@@ -22,7 +24,7 @@ def parse_arguments():
 
     # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
-    protocol_group.add_argument('--sql-server', action='store_true', help='Detect all SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
+    protocol_group.add_argument('--sql-server', action='store_true', help='Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
     
     # Protocol Filters
     protocol_group = parser.add_argument_group('Protocol Filters')
@@ -43,11 +45,11 @@ def parse_arguments():
     # Other
     other_group = parser.add_argument_group('Other')
     other_group.add_argument('--filtered', action='store_true', help='Include filtered ports')
+    other_group.add_argument('--matrix-mode', action='store_true', help='Enable matrix mode visualization')
     
     return parser.parse_args()
 
 def parse_nmap_xml(file_path):
-    """Parses the Nmap XML file and returns a list of host data, with improved OS detection."""
     tree = ET.parse(file_path)
     root = tree.getroot()
     hosts_data = []
@@ -63,7 +65,7 @@ def parse_nmap_xml(file_path):
             }
 
 
-            # Enhanced OS detection
+            # OS detection
             highest_confidence = 0
             for osmatch in host.findall('os/osmatch'):
                 current_confidence = int(osmatch.get('accuracy', 0))
@@ -81,7 +83,6 @@ def parse_nmap_xml(file_path):
     return hosts_data
 
 def filter_hosts(hosts_data, args):
-    """Filters hosts based on the command-line arguments and returns the filtered list."""
     sql_port_service_mapping = {
         '1433': 'MSSQL',
         '3306': 'MySQL',
@@ -97,6 +98,30 @@ def filter_hosts(hosts_data, args):
         '8087': 'Riak',
         '9042': 'Cassandra'
     }
+
+    protocol_port_mapping = {
+        'ftp': '21',
+        'ssh': '22',
+        'http': '80',
+        'https': '443',
+        'dns': '53',
+        'kerberos': '88',
+        'smb': {'139', '445'},
+        'ldap': {'139', '636', '3268', '3269'},
+        'mssql': '1433',
+        'mysql': '3306',
+        'rdp': '3389',
+        'vnc': '5900',
+        'winrm': '5985'
+    }
+
+    def is_protocol_open(host, protocol):
+        ports = protocol_port_mapping.get(protocol)
+        if isinstance(ports, set):
+            return bool(ports.intersection([pid for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)]))
+        else:
+            return ports in [pid for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)]
+
 
     filtered_hosts = []
     for host in hosts_data:
@@ -115,72 +140,21 @@ def filter_hosts(hosts_data, args):
                 continue
 
         # Protocol only part
-        if args.ftp:
-            if '21' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.ssh:
-            if '22' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-        
-        if args.http:
-            if '80' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-        
-        if args.https:
-            if '443' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-                
-        if args.dns:
-            if '53' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.kerberos:
-            if '88' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.smb:
-            smb_ports = {'139', '445'}
-            if not smb_ports.intersection([pid for pid, state in host['ports'] if state == 'open']):
-                continue
-        
-        if args.ldap:
-            ldap_ports= {'139', '636', '3268', '3269'}
-            if not ldap_ports.intersection([pid for pid, state in host['ports'] if state == 'open']):
-                continue
-
-        if args.mssql:
-            if '1433' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.mysql:
-            if '3306' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.rdp:
-            if '3389' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.vnc:
-            if '5900' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-
-        if args.winrm:
-            if '5985' not in [pid for pid, state in host['ports'] if state == 'open']:
-                continue
-        
-        if ports and (
-            (args.windows and 'windows' in host['os_name'].lower()) or 
-            (args.linux and 'linux' in host['os_name'].lower()) or 
-            (not args.windows and not args.linux)
-        ):
-            host['ports'] = ports
-            filtered_hosts.append(host)
+        for protocol in protocol_port_mapping.keys():
+            if getattr(args, protocol, False) and not is_protocol_open(host, protocol):
+                break
+        else:
+            if ports and (
+                (args.windows and 'windows' in host['os_name'].lower()) or 
+                (args.linux and 'linux' in host['os_name'].lower()) or 
+                (not args.windows and not args.linux)
+            ):
+                host['ports'] = ports
+                filtered_hosts.append(host)
 
     return filtered_hosts
 
 def create_table(hosts_data, include_sql_service):
-    """Creates and returns a table with the parsed data, optionally including SQL Service type."""
     if include_sql_service:
         table = PrettyTable(['IP Address', 'Hostname', 'OS', 'Ports', 'SQL Service'])
     else:
@@ -204,14 +178,64 @@ def create_table(hosts_data, include_sql_service):
             ])
     return table
 
+def create_grid(hosts_data, include_sql_service=False):
+    ports = sorted(set(port for host in hosts_data for port in host['ports']))
+    hosts = sorted(set(host['ip_address'] for host in hosts_data))
+    grid = PrettyTable()
+
+    grid.border = True  
+    grid.horizontal_char = '-'
+    grid.junction_char = '+'
+    grid.header = False
+
+    for host in hosts:
+        host_data = hosts_data[hosts.index(host)]
+        host_ports = host_data['ports']
+        row = [host] + [port if port in host_ports else '' for port in ports]
+        if include_sql_service:
+            row.append(host_data.get('sql_service', ''))
+        grid.add_row(row)
+
+    return grid
+
 def main():
-    """The entry point for the script."""
     initialize_colorama()
     args = parse_arguments()
     hosts_data = parse_nmap_xml(args.file)
     filtered_hosts = filter_hosts(hosts_data, args)
-    table = create_table(filtered_hosts, args.sql_server)
-    print(table)
+
+    if args.matrix_mode:
+        grid = create_grid(filtered_hosts, args.sql_server)
+        print(grid)
+    else:
+        table = create_table(filtered_hosts, args.sql_server)
+        print(table)
+
+def get_arguments():
+    try:
+        return parse_arguments()
+    except argparse.ArgumentError as e:
+        raise Exception(f"Error parsing arguments: {e}")
+
+def get_hosts_data(file):
+    try:
+        return parse_nmap_xml(file)
+    except FileNotFoundError:
+        raise Exception(f"Error: File {file} not found.")
+    except ET.ParseError as e:
+        raise Exception(f"Error parsing XML: {e}")
+
+def get_filtered_hosts(hosts_data, args):
+    try:
+        return filter_hosts(hosts_data, args)
+    except Exception as e:
+        raise Exception(f"Error filtering hosts: {e}")
+
+def get_table(filtered_hosts, sql_server):
+    try:
+        return create_table(filtered_hosts, sql_server)
+    except Exception as e:
+        raise Exception(f"Error creating table: {e}")
 
 if __name__ == "__main__":
     main()
