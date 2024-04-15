@@ -212,19 +212,6 @@ def create_grid(hosts_data, include_sql_service=False):
 
     return grid
 
-def main():
-    initialize_colorama()
-    args = parse_arguments()
-    hosts_data = parse_nmap_xml(args.file)
-    filtered_hosts = filter_hosts(hosts_data, args)
-
-    if args.matrix_mode:
-        grid = create_grid(filtered_hosts, args.sql_server)
-        print(grid)
-    else:
-        table = create_table(filtered_hosts, args.sql_server)
-        print(table)
-
 def get_arguments():
     try:
         return parse_arguments()
@@ -250,6 +237,23 @@ def get_table(filtered_hosts, sql_server):
         return create_table(filtered_hosts, sql_server)
     except Exception as e:
         raise Exception(f"Error creating table: {e}")
+
+def main():
+    initialize_colorama()
+    args = parse_arguments()
+    hosts_data = parse_nmap_xml(args.file)
+    filtered_hosts = filter_hosts(hosts_data, args)
+
+    if not filtered_hosts:
+        print("No hosts found matching the given criteria.")
+        return
+
+    if args.matrix_mode:
+        grid = create_grid(filtered_hosts, args.sql_server)
+        print(grid)
+    else:
+        table = create_table(filtered_hosts, args.sql_server)
+        print(table)
 
 if __name__ == "__main__":
     main()
