@@ -1,5 +1,3 @@
-⚠️ Vizmap is in an early state of release. Many more features will be added as the script matures.
-
 # VizMap
 
 VizMap is a Python script designed for parsing and filtering Nmap scan results in XML format. It enhances the usability and readability of Nmap's output by allowing users to easily filter hosts based on operating system type, open ports, and specific protocols. Additionally, VizMap introduces an auto-detection feature for SQL servers, improving the process of identifying database services across scanned networks.
