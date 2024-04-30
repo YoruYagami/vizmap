@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElementTree
 import argparse
 from prettytable import PrettyTable
 from colorama import Fore, Style
@@ -20,7 +20,6 @@ def parse_arguments():
     # OS Filters
     os_group = parser.add_argument_group('OS Filters')
     os_group.add_argument('--windows', action='store_true', help='Filter for Windows hosts')
-    os_group.add_argument('--linux', action='store_true', help='Filter for Linux hosts')
 
     # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
@@ -44,7 +43,7 @@ def parse_arguments():
 
     # Custom visualization
     visualization = parser.add_argument_group('Visualization')
-    visualization.add_argument('--matrix-mode', action='store_true', help='Enable matrix mode visualization')
+    visualization.add_argument('--matrix', action='store_true', help='Enable matrix mode visualization')
 
     # Other
     other_group = parser.add_argument_group('Other')
@@ -54,7 +53,7 @@ def parse_arguments():
     return parser.parse_args()
 
 def parse_nmap_xml(file_path):
-    tree = ET.parse(file_path)
+    tree = ElementTree.parse(file_path)
     root = tree.getroot()
     hosts_data = []
 
@@ -67,7 +66,6 @@ def parse_nmap_xml(file_path):
                 'ports': [],
                 'sql_service': ''
             }
-
 
             # OS detection
             highest_confidence = 0
@@ -109,7 +107,6 @@ def filter_hosts(hosts_data, args):
         '26257': 'CockroachDB'
     }
 
-
     protocol_port_mapping = {
         'ftp': '21',
         'ssh': '22',
@@ -132,7 +129,6 @@ def filter_hosts(hosts_data, args):
             return bool(ports.intersection([pid for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)]))
         else:
             return ports in [pid for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)]
-
 
     filtered_hosts = []
     for host in hosts_data:
@@ -158,11 +154,7 @@ def filter_hosts(hosts_data, args):
             if getattr(args, protocol, False) and not is_protocol_open(host, protocol):
                 break
         else:
-            if ports and (
-                (args.windows and 'windows' in host['os_name'].lower()) or 
-                (args.linux and 'linux' in host['os_name'].lower()) or 
-                (not args.windows and not args.linux)
-            ):
+            if ports:
                 host['ports'] = ports
                 filtered_hosts.append(host)
 
@@ -223,7 +215,7 @@ def get_hosts_data(file):
         return parse_nmap_xml(file)
     except FileNotFoundError:
         raise Exception(f"Error: File {file} not found.")
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         raise Exception(f"Error parsing XML: {e}")
 
 def get_filtered_hosts(hosts_data, args):
@@ -248,7 +240,7 @@ def main():
         print("No hosts found matching the given criteria.")
         return
 
-    if args.matrix_mode:
+    if args.matrix:
         grid = create_grid(filtered_hosts, args.sql_server)
         print(grid)
     else:
