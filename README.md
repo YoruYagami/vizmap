@@ -41,7 +41,7 @@ python3 vizmap.py nmap-results.xml --port 2375
 ## Optional Arguments
 
 ```
-usage: vizmap.py [-h] [--windows] [--linux] [--sql-server] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm] [--matrix-mode] [--filtered] file
+usage: vizmap.py [-h] [--windows] [--sql-server] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm] [--matrix] [--filtered] file
 
 Parse and visualize Nmap XML output in matrix mode.
 
@@ -53,7 +53,6 @@ options:
 
 OS Filters:
   --windows      Filter for Windows hosts
-  --linux        Filter for Linux hosts
 
 Protocol Auto-Detector:
   --sql-server   Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)
@@ -74,7 +73,7 @@ Protocol Filters:
   --winrm        Filter for hosts with an open WinRM port
 
 Visualization:
-  --matrix-mode  Enable matrix mode visualization
+  --matrix  Enable matrix mode visualization
 
 Other:
   --filtered     Include filtered ports
