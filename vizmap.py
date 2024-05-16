@@ -132,6 +132,9 @@ def filter_hosts(hosts_data, args):
 
     filtered_hosts = []
     for host in hosts_data:
+        if args.windows and 'windows' not in host['os_name'].lower():
+            continue
+
         ports = [
             f'{Fore.GREEN}{pid}{Style.RESET_ALL}' if state == 'open' else f'{Fore.YELLOW}{pid}{Style.RESET_ALL}' 
             for pid, state in host['ports'] if state == 'open' or (state == 'filtered' and args.filtered)
