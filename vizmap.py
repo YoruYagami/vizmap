@@ -2,8 +2,6 @@ import xml.etree.ElementTree as ElementTree
 import argparse
 from prettytable import PrettyTable
 from colorama import Fore, Style
-import networkx as nx
-import matplotlib.pyplot as plt
 import sys
 
 def initialize_colorama():
@@ -23,7 +21,7 @@ def parse_arguments():
 
     # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
-    protocol_group.add_argument('--sql-server', action='store_true', help='Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
+    protocol_group.add_argument('--sql', action='store_true', help='Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
 
     # Protocol Filters
     protocol_group = parser.add_argument_group('Protocol Filters')
@@ -40,10 +38,6 @@ def parse_arguments():
     protocol_group.add_argument('--rdp', action='store_true', help='Filter for hosts with an open RDP port')
     protocol_group.add_argument('--vnc', action='store_true', help='Filter for hosts with an open VNC port')
     protocol_group.add_argument('--winrm', action='store_true', help='Filter for hosts with an open WinRM port')
-
-    # Custom visualization
-    visualization = parser.add_argument_group('Visualization')
-    visualization.add_argument('--matrix', action='store_true', help='Enable matrix mode visualization')
 
     # Other
     other_group = parser.add_argument_group('Other')
@@ -144,7 +138,7 @@ def filter_hosts(hosts_data, args):
             continue
 
         # Protocol Auto-Detector part
-        if args.sql_server:
+        if args.sql:
             sql_ports = set(sql_port_service_mapping.keys())
             open_sql_ports = sql_ports.intersection([pid for pid, state in host['ports'] if state == 'open'])
             if open_sql_ports:
@@ -200,7 +194,7 @@ def create_grid(hosts_data, include_sql_service=False):
     for host in hosts:
         host_data = hosts_data[hosts.index(host)]
         host_ports = host_data['ports']
-        row = [host, host_data['os_name']] + [port if port in host_ports else '' for port in ports]
+        row = [host, host_data['hostname'], host_data['os_name']] + [port if port in host_ports else '' for port in ports]
         if include_sql_service:
             row.append(host_data.get('sql_service', ''))
         grid.add_row(row)
@@ -243,12 +237,8 @@ def main():
         print("No hosts found matching the given criteria.")
         return
 
-    if args.matrix:
-        grid = create_grid(filtered_hosts, args.sql_server)
-        print(grid)
-    else:
-        table = create_table(filtered_hosts, args.sql_server)
-        print(table)
+    grid = create_grid(filtered_hosts, args.sql)
+    print(grid)
 
 if __name__ == "__main__":
     main()
