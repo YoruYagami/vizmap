@@ -3,6 +3,7 @@ import argparse
 from prettytable import PrettyTable
 from colorama import Fore, Style
 import sys
+import re
 
 def initialize_colorama():
     """Initializes colorama for color support on Windows."""
@@ -15,15 +16,12 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Parse and visualize Nmap XML output in matrix mode.')
     parser.add_argument('file', help='Nmap XML output file')
     
-    # OS Filters
     os_group = parser.add_argument_group('OS Filters')
     os_group.add_argument('--windows', action='store_true', help='Filter for Windows hosts')
 
-    # Protocol Auto-Detector
     protocol_group = parser.add_argument_group('Protocol Auto-Detector')
     protocol_group.add_argument('--sql', action='store_true', help='Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)')
 
-    # Protocol Filters
     protocol_group = parser.add_argument_group('Protocol Filters')
     protocol_group.add_argument('--ftp', action='store_true', help='Filter for hosts with an open FTP port')
     protocol_group.add_argument('--ssh', action='store_true', help='Filter for hosts with an open SSH port')
@@ -39,7 +37,6 @@ def parse_arguments():
     protocol_group.add_argument('--vnc', action='store_true', help='Filter for hosts with an open VNC port')
     protocol_group.add_argument('--winrm', action='store_true', help='Filter for hosts with an open WinRM port')
 
-    # Other
     other_group = parser.add_argument_group('Other')
     other_group.add_argument('--port', type=int, help='Filter for hosts with a specific open port')
     other_group.add_argument('--filtered', action='store_true', help='Include filtered ports')
@@ -61,7 +58,6 @@ def parse_nmap_xml(file_path):
                 'sql_service': ''
             }
 
-            # OS detection
             highest_confidence = 0
             for osmatch in host.findall('os/osmatch'):
                 current_confidence = int(osmatch.get('accuracy', 0))
@@ -137,7 +133,6 @@ def filter_hosts(hosts_data, args):
         if args.port and not any(pid == str(args.port) and state == 'open' for pid, state in host['ports']):
             continue
 
-        # Protocol Auto-Detector part
         if args.sql:
             sql_ports = set(sql_port_service_mapping.keys())
             open_sql_ports = sql_ports.intersection([pid for pid, state in host['ports'] if state == 'open'])
@@ -146,7 +141,6 @@ def filter_hosts(hosts_data, args):
             else:
                 continue
 
-        # Protocol only part
         for protocol in protocol_port_mapping.keys():
             if getattr(args, protocol, False) and not is_protocol_open(host, protocol):
                 break
@@ -157,32 +151,13 @@ def filter_hosts(hosts_data, args):
 
     return filtered_hosts
 
-def create_table(hosts_data, include_sql_service):
-    if include_sql_service:
-        table = PrettyTable(['IP Address', 'Hostname', 'OS', 'Ports', 'SQL Service'])
-    else:
-        table = PrettyTable(['IP Address', 'Hostname', 'OS', 'Ports'])
-    
-    for host in hosts_data:
-        if include_sql_service:
-            table.add_row([
-                host['ip_address'], 
-                host['hostname'], 
-                host['os_name'], 
-                ','.join(host['ports']), 
-                host.get('sql_service', '')
-            ])
-        else:
-            table.add_row([
-                host['ip_address'], 
-                host['hostname'], 
-                host['os_name'], 
-                ','.join(host['ports'])
-            ])
-    return table
+def strip_ansi(text):
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
 
 def create_grid(hosts_data, include_sql_service=False):
-    ports = sorted(set(port for host in hosts_data for port in host['ports']))
+    all_ports = set(strip_ansi(port) for host in hosts_data for port in host['ports'])
+    ports = sorted(all_ports, key=lambda x: int(x))
     hosts = sorted(set(host['ip_address'] for host in hosts_data))
     grid = PrettyTable()
 
@@ -191,10 +166,20 @@ def create_grid(hosts_data, include_sql_service=False):
     grid.junction_char = '+'
     grid.header = False
 
+    field_names = ['IP Address', 'Hostname', 'OS'] + ports
+    if include_sql_service:
+        field_names.append('SQL Service')
+    grid.field_names = field_names
+
     for host in hosts:
-        host_data = hosts_data[hosts.index(host)]
-        host_ports = host_data['ports']
-        row = [host, host_data['hostname'], host_data['os_name']] + [port if port in host_ports else '' for port in ports]
+        host_data = next(h for h in hosts_data if h['ip_address'] == host)
+        host_ports = {strip_ansi(port): port for port in host_data['ports']}
+        row = [host, host_data['hostname'], host_data['os_name']]
+        for port in ports:
+            if port in host_ports:
+                row.append(host_ports[port])
+            else:
+                row.append('')
         if include_sql_service:
             row.append(host_data.get('sql_service', ''))
         grid.add_row(row)
@@ -220,12 +205,6 @@ def get_filtered_hosts(hosts_data, args):
         return filter_hosts(hosts_data, args)
     except Exception as e:
         raise Exception(f"Error filtering hosts: {e}")
-
-def get_table(filtered_hosts, sql_server):
-    try:
-        return create_table(filtered_hosts, sql_server)
-    except Exception as e:
-        raise Exception(f"Error creating table: {e}")
 
 def main():
     initialize_colorama()

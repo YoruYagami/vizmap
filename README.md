@@ -1,68 +1,45 @@
 # VizMap
-This project is a cli tool designed to parse and visualize Nmap XML output files in a matrix format. It supports filtering hosts based on various criteria such as operating system, specific protocols, and open ports.
+
+VizMap is a Python script designed to parse and visualize Nmap XML output in a matrix format. It allows users to filter and display information about hosts, services, and open ports detected by Nmap scans. This tool is particularly useful for quickly identifying specific services or operating systems across a network scan.
 
 ## Features
-- **Parse Nmap XML Output:** Extracts detailed information from Nmap XML files.
-- **OS and Protocol Filters:** Filters hosts based on operating system and specific protocols.
-- **Protocol Auto-Detection:** Automatically detects SQL servers and other common services.
-- **Color-Coded Output:** Utilizes color coding to distinguish open and filtered ports.
+
+- **OS Filtering**: Filter hosts based on their detected operating systems (e.g., Windows).
+- **Protocol Filtering**: Focus on hosts with specific open ports (e.g., FTP, SSH, HTTP).
+- **SQL Service Detection**: Automatically detect common SQL services like MSSQL, MySQL, PostgreSQL, and more.
+- **Custom Port Filtering**: Specify a custom port to filter hosts.
+- **ANSI Color Support**: Colored output to differentiate between open and filtered ports.
 
 ## Requirements
-- Python 3.x
-- Required Python packages: `xml.etree.ElementTree`, `argparse`, `prettytable`, `colorama`
 
-## Installation
-To install the required Python packages, run:
+- Python 3.x
+- [PrettyTable](https://pypi.org/project/prettytable/)
+- [Colorama](https://pypi.org/project/colorama/)
+
+Install the required Python packages using pip:
+
 ```bash
-pip install -r requirements.txt
+pip install prettytable colorama
 ```
 
 ## Usage
 ```bash
-python vizmap.py <nmap_xml_file> [options]
+python vizmap.py <nmap_output.xml> [options]
 ```
 
-## Example
+## Example Output
 ```bash
-python vizmap.py scan.xml --windows --http
++-------------+-----------------+---------------------+----+----+----+----+-----+-----+------+------+------+------+
+| 192.168.1.1 |   router.local  |     Linux 2.6.32    |    | 22 |    | 80 | 443 |     |      |      |      |      |
+| 192.168.1.2 | webserver.local | Windows Server 2016 | 21 |    | 25 |    |     |     |      |      | 3306 |      |
+| 192.168.1.3 |  dbserver.local |      Windows 10     |    |    |    |    |     | 445 | 1433 | 1434 |      | 3389 |
++-------------+-----------------+---------------------+----+----+----+----+-----+-----+------+------+------+------+
 ```
 
-## --help
-```bash
-usage: vizmap.py [-h] [--windows] [--sql] [--ftp] [--ssh] [--http] [--https] [--dns] [--kerberos] [--smb] [--ldap] [--mssql] [--mysql] [--rdp] [--vnc] [--winrm]
-                 [--port PORT] [--filtered]
-                 file
+## 🤝 Contributing
 
-Parse and visualize Nmap XML output in matrix mode.
+Contributions are welcome! Please open an issue or submit a pull request.
 
-positional arguments:
-  file         Nmap XML output file
+## 📜 License
 
-options:
-  -h, --help   show this help message and exit
-
-OS Filters:
-  --windows    Filter for Windows hosts
-
-Protocol Auto-Detector:
-  --sql        Detect SQL Servers (MSSQL, MySQL, PostgreSQL, Oracle, MongoDB, HSQLDB ecc..)
-
-Protocol Filters:
-  --ftp        Filter for hosts with an open FTP port
-  --ssh        Filter for hosts with an open SSH port
-  --http       Filter for hosts with an open HTTP port
-  --https      Filter for hosts with an open HTTPS port
-  --dns        Filter for hosts with an open DNS port
-  --kerberos   Filter for hosts with an open Kerberos port
-  --smb        Filter for hosts with an open SMB port
-  --ldap       Filter for hosts with an open LDAP port
-  --mssql      Filter for hosts with an open MSSQL port
-  --mysql      Filter for hosts with an open MySQL port
-  --rdp        Filter for hosts with an open RDP port
-  --vnc        Filter for hosts with an open VNC port
-  --winrm      Filter for hosts with an open WinRM port
-
-Other:
-  --port PORT  Filter for hosts with a specific open port
-  --filtered   Include filtered ports
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
